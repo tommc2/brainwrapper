@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" creationComplete="init()"
+	xmlns:cust="com.psc.components.*">
+	
+	<mx:Script source="embeds.as"/>
+	<mx:Style source="style.css"/>
+	
+	<mx:Script>
+		<![CDATA[
+		
+				import flash.display.*;
+				import flash.display.Loader;
+				import flash.events.Event;
+				import flash.net.URLRequest;
+				import flash.net.URLLoader;			
+				import flash.text.*;
+		
+			//*********************interface that the container will require:
+			
+			import mx.rpc.events.ResultEvent;
+			
+			private function init():void{
+				this.systemManager.loaderInfo.sharedEvents.addEventListener('containerevent', gotevent);
+				gameinit();
+			}
+						
+			private function gotevent(e:*):void{		
+				trace('got event: ' + e.result.command);
+				this[e.result.command]();
+			}
+			
+			public function doSplash():void{
+				trace('doing splash!!')
+				gamebox.selectedChild = splash;
+			}
+			
+			public function doGame():void{
+				trace('doing game!!')
+				gamebox.selectedChild = exwindow;
+			}
+			
+			public function doResults():void{
+				trace('doing results')
+				gamebox.selectedChild = results;
+			}
+			
+			private function ready(dat:Object = null):void{
+				trace('ready')
+				this.systemManager.loaderInfo.sharedEvents.dispatchEvent(
+					new ResultEvent('gameevent', false, true, {gamedata:dat}));
+			}
+		
+		/////////////////////////////////////////////////////////////////////////
+				
+				[Bindable]
+				private var speedLev:int = -1;
+				[Bindable]
+				private var numCorr:int = -1;
+				[Bindable]
+				private var numTot:int = -1;
+		
+		
+				private var expTxt:String = ' <h2>You just experienced the &quot;Stroop Effect.&quot;</h2>'+
+            								'<h3>What does this mean?</h3> '+
+           ' <p>The 60-second Brain Game is a variation of psychological experiments that measure the &quot;Stroop effect.&quot;  These experiments require the brain to respond to conflicting information to measure its flexibility and speed.</p> '+
+           ' <p>Reaching higher levels means that your brain is faster and more flexible. How many you get correct doesn&rsquo;t really matter, because the game adapts to you. What matters is speed.</p> '+
+           ' <p>The 60-Second Brain Game was developed by Posit Science, the leader in brain fitness software programs clinically proven to help people think faster, focus better, and remember more.</p>'
+		
+			
+				private var _ex:MovieClip;				
+				private var dataXML:XML = <configurations gameType="Stroop">
+											<stimConfig stimConfig_id="1">
+											  <stroopEffect>0</stroopEffect> 
+											  <blockTime>3000</blockTime> 
+											  <targetPercent>50</targetPercent> 
+											  <initVal>60</initVal> 
+											  <tutorial>0</tutorial> 
+											</stimConfig>
+											<stimConfig stimConfig_id="2">
+											  <stroopEffect>1</stroopEffect> 
+											  <blockTime>6000</blockTime> 
+											  <targetPercent>40</targetPercent> 
+											  <initVal>60</initVal> 
+											  <tutorial>0</tutorial> 
+											  </stimConfig>
+										  </configurations>
+									  
+				private var block:uint = 0;
+				private var resultsPage:String, practice:String;
+			
+				public function gameinit()
+				{					
+					var ldr:Loader = new Loader();
+					ldr.contentLoaderInfo.addEventListener(Event.COMPLETE, LoaderCompleteHandler);
+					ldr.load(new URLRequest('60sec.swf'));
+				}
+		
+				public function LoaderCompleteHandler(e:Event):void
+				{
+					_ex = e.target.content;
+					exwindow.rawChildren.addChild(_ex);	
+					_ex.addEventListener("InitMovieDone", InitMovieDone);
+					_ex.addEventListener("BlockFinished", BlockFinished);
+					_ex.addEventListener("GameFinished", GameFinished);
+					_ex["InitClass"]();
+				}
+				
+				
+				public function InitMovieDone(e:Event):void
+				{
+					trace("InitMovieDone() e "+e);
+					if(block >= dataXML.stimConfig.length()){Graduate(); return;}
+					
+					var oParameters:Object = new Object();
+					var thisBlock:XMLList = dataXML.stimConfig[block].children();
+					for (var i:uint = 0; i < thisBlock.length(); i++){
+						oParameters[thisBlock[i].name()] = thisBlock[i].toString();
+					}
+					oParameters.blockID = block+1;
+					oParameters.resultsPage = resultsPage;
+					oParameters.practice = practice;
+					_ex['InitBlock'](oParameters);
+				}
+		
+				public function BlockFinished(e:Event):void
+				{
+					trace("BlockFinished() e "+e);
+					var sCommand:String = "InitBlock";
+					var oParameters:Object = new Object();
+					//exerciseInterface.ExecuteCommand(sCommand, oParameters);
+					block++;
+					InitMovieDone(e);
+				}
+		
+				public function GameFinished(e:Event):void{
+					trace('--------------------------------------game finish called!')
+					trace(_ex['gLevel'])
+					trace(_ex['gTrialCount'])
+					trace(_ex['gTrialCorrect'])
+					trace(_ex['gThreshold'])
+					speedLev = _ex['gLevel']
+					numCorr = _ex['gTrialCorrect'];
+					numTot = _ex{'gTrialCound'];
+					ready();
+//					ready({level:_ex['gLevel'],
+//							 trials:_ex['gTrialCount'],
+//							 corrtrials:_ex['gTrialCorrect'], 
+//							 thresh:_ex['gThreshold']});
+				}
+				
+				public function ReviewBlockFinished(e:Event):void
+				{
+					trace('--------------------------------------review finish called!')
+				}
+				
+				public function Graduate():void					
+				{
+					trace('-----------------------------------------graduate called');	
+					_ex['InitMap']({});		
+				}
+		]]>
+	</mx:Script>
+	
+	<mx:ViewStack id = "gamebox" creationPolicy="all" width="100%" height = "100%">
+	
+		<cust:splash id="splash" backgroundImage="@Embed('assets/sixtysec/count_splash1.png')" backgroundColor="0xddffee" paddingLeft="50">
+			<mx:Spacer height="50"/>
+			<cust:positbutton click = "ready()" label = "Play now"/>
+		</cust:splash>
+		
+		<mx:VBox id="exwindow" width="100%" height="100%" backgroundColor="0x00FF00" >
+		</mx:VBox>
+		
+		<mx:HBox id="results" width="100%" height="100%">
+			<mx:VBox width = "100%" height = "100%">
+				<mx:Label text="Detailed Results" fontSize="24"/>
+				<mx:Box width = "100%" height = "100%" backgroundImage="@Embed('assets/sixtysec/BarGraph.jpg')"/>
+				<mx:Text text = "Most get to speed level 3 (out of 5)"/>
+				<mx:Text text = "Your score: speed level {speedLev} (out of 5)"/>
+				<mx:Canvas width = "100%" height = "100%" backgroundImage="@Embed('assets/sixtysec/PieChart.jpg')"/>
+				<mx:Text text = "Most get 55 out of 71 correct"/>
+				<mx:Text text = "Your score: {numCorr} out of {numTot} correct"/>
+			</mx:VBox>
+			
+			<mx:VBox width = "100%" height = "100%">
+				<mx:TextArea width = "100%" height = "100%" htmlText= "{expTxt}"/>
+				<mx:HBox width = "100%" height = "100%">
+					<cust:positbutton label="Play Again!"/>
+					<cust:positbutton label="Fill out our Survey?"/>						
+				</mx:HBox>
+			</mx:VBox>
+		</mx:HBox>
+		
+		
+	</mx:ViewStack>
+
+	
+</mx:Application>

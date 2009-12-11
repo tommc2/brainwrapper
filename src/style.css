@@ -1,0 +1,31 @@
+Application{
+	backgroundGradientColors:#FFFFFF,#CCCCCC;
+    fontFamily:"_avenir";
+	fontSize:14;
+}
+
+TextArea{
+	selectable:false;
+	editable:false;
+}
+
+.yellowgrad{ 
+	borderStyle: applicationControlBar; 
+	fillColors: #ffdc8a, #febe27; 
+	fillAlphas: 1, 1; 
+}
+
+Alert{
+   cornerRadius: 10;
+   width: 400;
+   height: 300;
+	titleStyleName: panelTitleTxt;
+	backgroundColor:#EFEFFF;
+	borderColor:#EFEFFF;
+	color:"0x000000";
+	fontSize:18;
+}
+
+Box{
+	backgroundColor:#FFFFFF;
+}

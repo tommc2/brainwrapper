@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" creationComplete="init()"
+	xmlns:cust="com.psc.components.*">
+	
+	<mx:Script source="embeds.as"/>
+	<mx:Style source="style.css"/>
+	
+	<mx:Script>
+		<![CDATA[
+		
+				import flash.display.*;
+				import flash.display.Loader;
+				import flash.events.Event;
+				import flash.net.URLRequest;
+				import flash.net.URLLoader;			
+				import flash.text.*;
+		
+				import utils.HTTPUtil;
+			//*********************interface that the container will require:
+			
+			import mx.rpc.events.ResultEvent;
+			
+			private function init():void{
+				this.systemManager.loaderInfo.sharedEvents.addEventListener('containerevent', gotevent);
+				gameinit();
+			}
+			
+			private function gotevent(e:*):void{		
+				trace('got event: ' + e.result.command);
+				this[e.result.command]();
+			}
+			
+			public function doSplash():void{
+				trace('doing splash!!');
+				gamebox.selectedChild = splash;
+			}
+			
+			public function doGame():void{
+				trace('doing game!!');
+				gamebox.selectedChild = exwindow;
+			}
+			
+			public function doResults():void{
+				trace('doing results');
+				gamebox.selectedChild = results;
+			}
+			
+			private function ready(dat:Object = null):void{
+				trace('ready');
+				this.systemManager.loaderInfo.sharedEvents.dispatchEvent(
+					new ResultEvent('gameevent', false, true, {gamedata:dat}));
+			}
+		
+		/////////////////////////////////////////////////////////////////////////
+			
+				private var _ex:MovieClip;	
+				
+				private var threshexp:String = 'Did you know we were keeping track of how many letters were in your tray? You may have noticed that when you used all of your letters before the timer ran out, you were given an additional letter tiles to use in the next turn.  Conversly, if you ran out of time before using your letters, a letter tile was removed in the next turn.  This adaptive component is critical to brain fitness and not routinely found in online word games.';
+				
+				[Bindable]
+				private var thresh:int = 0;
+				[Bindable]
+				private var score:int = 0;
+				
+				public function gameinit()
+				{
+					var ldr:Loader = new Loader();
+					ldr.contentLoaderInfo.addEventListener(Event.COMPLETE, LoaderCompleteHandler);
+					ldr.load(new URLRequest('scrabble.swf'));
+				}
+				
+				public function LoaderCompleteHandler(e:Event):void
+				{
+					_ex = e.target.content;
+					exwindow.rawChildren.addChild(_ex);
+					_ex.addEventListener('donewithgame', gamedone);
+				}
+				
+				public function gamedone(e:Event):void{
+					trace('game done:')
+					score = _ex['resscore']
+					thresh = _ex['resthresh'];
+					ready();
+				}
+				
+				public function startover():void{
+					HTTPUtil.refresh();
+				}
+		]]>
+	</mx:Script>
+	
+	<mx:ViewStack id = "gamebox" creationPolicy="all" width="100%" height = "100%">
+	
+		<cust:splash id="splash" backgroundImage="@Embed('assets/wanderer/jack_splash4.jpg')" backgroundColor="0xddffee" paddingLeft="50">
+			<mx:Spacer height="50"/>
+			<cust:positbutton click = "ready()" label = "Play now"/>
+		</cust:splash>
+		
+		<mx:VBox id="exwindow" width="100%" height="100%" backgroundColor="0x00FF00"/>
+		
+		<mx:HBox id="results" width="100%" height="100%">
+			<mx:VBox width = "100%" height = "100%">
+			<mx:Label text="Detailed Results" fontSize="24"/>
+				<mx:Box width = "100%" height = "100%" backgroundImage="@Embed('assets/sixtysec/BarGraph.jpg')"/>
+				<mx:Label text="Your score: {score}"/>
+				<mx:Label text = "Average number of letters in the tray: {thresh}"/>
+				<mx:TextArea selectable="false" editable="false" text="{threshexp}"
+					width="100%" height = "200"/>
+			</mx:VBox>
+			
+			<mx:VBox width = "100%" height = "100%" label="Interested in your brain health?">
+				<mx:TextArea width = "100%" height = "100%" htmlText= "Want more fun brain games as well as access to scientifically validated research on how to improve your brain health?"/>
+				<mx:HBox width = "100%" height = "100%">
+					<cust:positbutton label="Play Again!" click = "startover()"/>
+					<cust:positbutton label="Fill out our Survey?"/>				
+				</mx:HBox>
+			</mx:VBox>
+		</mx:HBox>
+				
+	</mx:ViewStack>
+	
+</mx:Application>

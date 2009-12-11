@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute"
+		xmlns:psc = "com.psc.components.*"
+		 creationComplete="setup()">
+	
+	<mx:Script source="embeds.as"/>
+	<mx:Script source="states.as"/>
+	<mx:Style source="style.css"/>
+	
+	<mx:Script>
+		<![CDATA[
+		
+			import utils.*;
+			import mx.events.FlexEvent;
+			import mx.controls.Alert;
+		 
+			[Bindable]
+			private var _gametitle:String = getParam('game') || 'testgame';			
+			
+			[Bindable]
+			private var _swfname:String = 'wordwanderer'; //getParam('f') || 'wordwanderer';
+			
+			
+			private var _cookiepresent:Boolean = (CookieUtil.getCookie('psc')!=null)
+			
+			private function setup():void{
+//				Alert.show('scheme:'+_scheme)
+//				var message:String = _cookiepresent?"cookie found":"cookie NOT found";
+//				Alert.show(message, 'ACHTUNG!', 4, this, (_cookiepresent?null:setcookie))
+			}
+			
+			private function getParam(paramName:String){
+				return HTTPUtil.getParameterValue(paramName);
+			}
+			
+			public function setcookie(e:Event = null):void{
+//				Alert.show('setting cornucopia cookie to "source:nback"')
+//				CookieUtil.setCookie('cornucopia', {source:'nback'}, 300)
+			}
+			
+			private function listenforgame():void {
+                exloader.content.loaderInfo.sharedEvents.removeEventListener('gameevent', gameevent);
+                exloader.content.loaderInfo.sharedEvents.addEventListener('gameevent', gameevent);
+			}
+			
+			private function gameevent(e:*):void{
+				trace('loader got event: ' + e);
+				trace(e.result.gamedata);
+                exloader.content.loaderInfo.sharedEvents.removeEventListener('gameevent', gameevent);
+                advance('game event');
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:ViewStack id = "centerbox" creationPolicy="all" width="100%" height="100%">	
+	
+		<mx:HBox width = "100%" height = "100%" backgroundColor = "0xaaaaaa">
+			<mx:Button label = "getthingsgoing" click = "advance('getthingsgoingbutton')"/>
+		</mx:HBox>
+		
+		<mx:HBox id="exbako" width="100%" height="100%" backgroundColor="0xAAAAAA">
+			<mx:SWFLoader id = "exloader" source="{_swfname}adapter.swf" width="100%" height="100%"
+				complete="listenforgame()" trustContent="false" loadForCompatibility="true"/>
+		</mx:HBox>
+		
+		<psc:leadbox id = "leadview" gametitle="{_gametitle}" registered="advance('leadboxsubmit')"/>
+			
+	</mx:ViewStack>	
+	
+</mx:Application>

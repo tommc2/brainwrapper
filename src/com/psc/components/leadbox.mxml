@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.rpc.events.ResultEvent;
+			import mx.events.ValidationResultEvent;
+			import utils.CookieUtil;
+			import flash.system.Security;
+			
+			[Bindable]
+			public var gametitle:String = "psc";
+			[Bindable]
+			private var formValid:Boolean = false;
+			
+			private var _submitted:Boolean = false;
+			
+			private const summarytxt:String = 'Fill in your information below to play our free brain games as many times as you like!<br/><br/>'+
+				'We will also send you our Brain Fitness e-newsletter with access to more fun games and scientifically validated information on how to improve your brain health.<br/><br/>'+
+				'We never sell or rent your information, as per our privacy policy.'
+				
+			private function submit():void{
+				if(!_submitted){
+					_submitted = true;
+//					leadSvc.send();
+//					w2pSvc.send({
+//							first_name:'tttttravis',
+//							last_name:'wwwwwade',
+//							email:'travisete48e777st@ps9c.com',
+//							lead_source:'test',
+//							sub_lead_source:'subtest',
+//							birth_year:'1985'});
+//					CookieUtil.setCookie('cornucopia', {source:'nback'}, 900);
+					dispatchEvent(new Event('registered'));
+				}
+			}
+			
+			private function validateform():void{
+				var emailval:ValidationResultEvent = emailValidator.validate();
+				var yobval:ValidationResultEvent = yobValidator.validate();
+				formValid = (emailval.type==ValidationResultEvent.VALID && yobval.type==ValidationResultEvent.VALID);
+			}
+			
+			private function handleReturn(e:ResultEvent):void{
+				trace('rweseult2!')
+				trace(e.result.toString())
+			}
+			
+			private function handleFault(e:Event):void{
+				trace('idiot.')
+				trace(e.toString());
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HTTPService
+		id = "leadSvc"
+		url = "http://datacopia.heroku.com/userinfos.xml"
+		resultFormat = "e4x" method = "POST"
+		fault = "handleFault(event)"
+		contentType = "application/xml">
+		<mx:request xmlns="">
+			<userinfo>
+				<email>
+					{emailin.text}
+				</email>
+				<gametype>
+					{gametitle}
+				</gametype>
+				<birthyear>
+					{yobin.text}
+				</birthyear>
+			</userinfo>
+		</mx:request>
+	</mx:HTTPService>
+	
+	<mx:HTTPService
+		id = "w2pSvc"
+		url = "http://www.positscience.com/includes/web2person/web2person.php"
+		resultFormat = "text" 
+		result = "handleReturn(event)"
+		method = "POST"
+		fault = "handleFault(event)">
+	</mx:HTTPService>
+	
+	<mx:Metadata>
+		[Event(name = "registered", type = "flash.events.Event")]
+	</mx:Metadata>
+	
+	<mx:Text width = "100%" height = "30" 
+		text = "Play {gametitle} and get free information on brain health!" 
+		color="0x003e72" fontSize="24" fontFamily="_avenirheavy"/>
+	<mx:TextArea width = "100%" height = "120" htmlText="{summarytxt}" selectable="false" editable="false" backgroundAlpha="0"/>
+	<mx:Text text = "First name:"/>
+	<mx:TextInput id = "fnamein" width = "50%" change="validateform()"/>
+	<mx:Text text = "Last name:"/>
+	<mx:TextInput id = "lnamein" width = "50%" change="validateform()"/>
+	<mx:Text text = "*Year of birth:"/>
+	<mx:TextInput id = "yobin" width = "20%" backgroundColor="0xffed9b" change="validateform()"/>
+	<mx:Text text = "*Email:"/>
+	<mx:TextInput id = "emailin" backgroundColor="0xffed9b" width = "50%" change="validateform()"/>
+	
+	<mx:EmailValidator id="emailValidator" source="{emailin}" property="text"/>	
+    <mx:NumberValidator id = "yobValidator" source = "{yobin}" property="text" minValue="1850" maxValue="2009"/>
+	
+	<mx:Button label="Submit" fontWeight="normal" alpha = "1" fillColors="[0xffdc8a, 0xfebe27]" fillAlphas="[1, 1]" fontSize="16"
+		 click="submit()" enabled="true"/><!--"{formValid}"/>-->
+</mx:VBox>

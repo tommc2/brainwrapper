@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute"
+	height = "100%" width="100%" backgroundColor="0x000000" creationComplete="init()">
+	<mx:Script>
+		<![CDATA[
+			import flash.events.Event;		
+			
+			import mx.rpc.events.ResultEvent;
+			
+			private function init():void{
+				this.systemManager.loaderInfo.sharedEvents.addEventListener('containerevent', gotevent);
+			}
+			
+			private function dispatch():void{
+				trace('loaded swf dispatching something');
+				this.systemManager.loaderInfo.sharedEvents.dispatchEvent(
+					new ResultEvent('gameevent', false, true, {gamedata:"hi, i'm data from the loaded swf"}));
+			}
+			
+			private function gotevent(e:*){				
+				trace('got event: ' + e);
+				trace(e.result.containerdata);
+			}
+			
+			public function doSplash():void{
+				trace('doing splash!!')
+			}
+			
+			public function doGame():void{
+				trace('doing game!!')
+			}
+			
+			public function doResults():void{
+				trace('doing results')
+			}
+			
+			private function ready():void{
+				trace('ready')
+				dispatch();
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:ViewStack id = "gamebox" creationPolicy="all" width="100%" height = "100%">
+		
+		<mx:HBox id="splash" width="100%" height="100%" backgroundColor="0xFF0000">
+			<mx:Button click = "ready()" label = "in the splash box"/>
+		</mx:HBox>
+		
+		<mx:HBox id="game" width="100%" height="100%" backgroundColor="0x00FF00">
+			<mx:Button click = "ready()" label = "in the game box"/>
+		</mx:HBox>
+		
+		<mx:HBox id="results" width="100%" height="100%" backgroundColor="0x0000FF">
+			<mx:Button click = "ready()" label = "in the results box"/>
+		</mx:HBox>
+		
+	</mx:ViewStack>
+	
+	
+</mx:Application>
