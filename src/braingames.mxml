@@ -9,33 +9,48 @@
 	
 	<mx:Script>
 		<![CDATA[
-		
+			
 			import utils.*;
 			import mx.events.FlexEvent;
 			import mx.controls.Alert;
-		 
+		 	
 			[Bindable]
-			private var _gametitle:String = getParam('game') || 'testgame';			
+			private var _gametitle:String;			
 			
 			[Bindable]
-			private var _swfname:String = 'wordwanderer'; //getParam('f') || 'wordwanderer';
+			private var _swfname:String;
 			
+			private var _cookiepresent:Boolean = (CookieUtil.getCookie('psc')!=null);
 			
-			private var _cookiepresent:Boolean = (CookieUtil.getCookie('psc')!=null)
+			[Bindable]
+			public var littlestfont:int = 14;
 			
 			private function setup():void{
-//				Alert.show('scheme:'+_scheme)
-//				var message:String = _cookiepresent?"cookie found":"cookie NOT found";
-//				Alert.show(message, 'ACHTUNG!', 4, this, (_cookiepresent?null:setcookie))
+				Security.allowDomain('*');
+				littlestfont = Math.ceil(this.width/50);
+				_gametitle = getParam('gametitle').replace("%20", ' ') || 'brain games';	
+				_swfname = getParam('f') || 'wordwanderer';	
+				_scheme = SCHEMES[int(getParam('order')) || 0];
+				
+				//misc. shit that was requested after the state structure was in place:
+				if(int(getParam('order'))==1){
+					leadview.titletxt = "Curious how your score compares to others?";
+					leadview.summarytxt = "Fill in your information to see how your score compares to others and receive a free Brain Fitness e-newsletter with access to more fun games and scientifically validated information on how to improve your brain health."
+				}
+				
 			}
 			
-			private function getParam(paramName:String){
-				return HTTPUtil.getParameterValue(paramName);
-			}
+			//FIRST look for parameter in the url. THEN check flashvars
+			private function getParam(paramName:String):*{
+				if (HTTPUtil.getParameterValue(paramName) != null)return HTTPUtil.getParameterValue(paramName);
+				if(Application.application == null)return null;
+				if(Application.application.parameters == null)return null;
+				return Application.application.parameters[paramName];
+			} 
 			
-			public function setcookie(e:Event = null):void{
-//				Alert.show('setting cornucopia cookie to "source:nback"')
-//				CookieUtil.setCookie('cornucopia', {source:'nback'}, 300)
+			private function gameloaded():void{
+				advance('gameloaded');
+				listenforgame();
 			}
 			
 			private function listenforgame():void {
@@ -44,27 +59,34 @@
 			}
 			
 			private function gameevent(e:*):void{
-				trace('loader got event: ' + e);
-				trace(e.result.gamedata);
+				trace('loader got event: ' + e);				
+				//this should go somewhere else..
+				try{teaserview.reward_txt = e.result.gamedata.res_txt;}catch(err){};			
                 exloader.content.loaderInfo.sharedEvents.removeEventListener('gameevent', gameevent);
                 advance('game event');
 			}
 			
 		]]>
-	</mx:Script>
+	</mx:Script> 
 	
 	<mx:ViewStack id = "centerbox" creationPolicy="all" width="100%" height="100%">	
 	
-		<mx:HBox width = "100%" height = "100%" backgroundColor = "0xaaaaaa">
-			<mx:Button label = "getthingsgoing" click = "advance('getthingsgoingbutton')"/>
-		</mx:HBox>
-		
+		<mx:VBox width="100%" height="100%" horizontalAlign="center">
+			<mx:Spacer height="30%" width="100%"/>
+			<mx:Canvas backgroundImage="@Embed('assets/blank_logo.gif')" width = "200" height = "80"/>
+			<mx:ProgressBar id = "progbar" width="50%" height="100%" indeterminate="true" label="loading game..."
+				 themeColor="haloOrange"/>  
+		</mx:VBox>
+				
 		<mx:HBox id="exbako" width="100%" height="100%" backgroundColor="0xAAAAAA">
 			<mx:SWFLoader id = "exloader" source="{_swfname}adapter.swf" width="100%" height="100%"
-				complete="listenforgame()" trustContent="false" loadForCompatibility="true"/>
+				complete="gameloaded()" trustContent="false" loadForCompatibility="true"/>
 		</mx:HBox>
 		
-		<psc:leadbox id = "leadview" gametitle="{_gametitle}" registered="advance('leadboxsubmit')"/>
+		<psc:leadbox id = "leadview" gametitle="{_gametitle}" registered="advance('leadboxsubmit')" 
+			littlestfont="{littlestfont}" subleadstr="{_gametitle}"/>
+		<psc:resultsteaser id = "teaserview" howdoicompare="advance('resultsteaser')" littlestfont="{littlestfont}"
+			 manualsignup="manualsignup()"/>
 			
 	</mx:ViewStack>	
 	

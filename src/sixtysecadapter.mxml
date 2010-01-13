@@ -15,12 +15,15 @@
 				import flash.net.URLLoader;			
 				import flash.text.*;
 		
+				import utils.HTTPUtil;
+		
 			//*********************interface that the container will require:
 			
 			import mx.rpc.events.ResultEvent;
 			
 			private function init():void{
 				this.systemManager.loaderInfo.sharedEvents.addEventListener('containerevent', gotevent);
+				littlestfont = Math.ceil(this.width/50);
 				gameinit();
 			}
 						
@@ -53,32 +56,42 @@
 		/////////////////////////////////////////////////////////////////////////
 				
 				[Bindable]
-				private var speedLev:int = -1;
+				private var speedLev:int = 0;
 				[Bindable]
-				private var numCorr:int = -1;
+				private var numCorr:int = 0;
 				[Bindable]
-				private var numTot:int = -1;
+				private var numTot:int = 0;
+				[Bindable]
+				private var littlestfont:int = 12;
 		
 		
-				private var expTxt:String = ' <h2>You just experienced the &quot;Stroop Effect.&quot;</h2>'+
-            								'<h3>What does this mean?</h3> '+
-           ' <p>The 60-second Brain Game is a variation of psychological experiments that measure the &quot;Stroop effect.&quot;  These experiments require the brain to respond to conflicting information to measure its flexibility and speed.</p> '+
-           ' <p>Reaching higher levels means that your brain is faster and more flexible. How many you get correct doesn&rsquo;t really matter, because the game adapts to you. What matters is speed.</p> '+
-           ' <p>The 60-Second Brain Game was developed by Posit Science, the leader in brain fitness software programs clinically proven to help people think faster, focus better, and remember more.</p>'
+				private var expTxt:String = ' <font size = "16">You just experienced the &quot;Stroop Effect.&quot;'+
+            								'<br/>What does this mean? </font>'+
+           ' <br/><br/>The 60-second Brain Game is a variation of psychological experiments that measure the &quot;Stroop effect.&quot;  These experiments require the brain to respond to conflicting information to measure its flexibility and speed. '+
+           ' <br/><br/>Reaching higher levels means that your brain is faster and more flexible. How many you get correct doesn&#39;t really matter, because the game adapts to you. What matters is speed. '+
+           ' <br/><br/>The 60-Second Brain Game was developed by Posit Science, the leader in brain fitness software programs clinically proven to help people think faster, focus better, and remember more.'
 		
 			
+				private const _disclaimerdrivel:String = "Copyright 2009 Posit Science. All Rights Reserved."+
+            	"Posit Science does not provide medical advice, diagnosis or treatment. Individual results from using our programs will vary.  "+
+            	'Your use of the site indicates your agreement to be bound by the '+
+            	'<font color = "#aa0000"><a href="http://www.positscience.com/terms.php">Terms and Conditions</a></font>;'+
+            	' please review them before using the site. Our '+
+            	'<font color = "#aa0000"><a href="http://www.positscience.com/privacy.php">Privacy Policy </a></font>changed on 7/13/09. '+
+            	'We recommend you review the updated policy.'
+            	
 				private var _ex:MovieClip;				
 				private var dataXML:XML = <configurations gameType="Stroop">
 											<stimConfig stimConfig_id="1">
 											  <stroopEffect>0</stroopEffect> 
-											  <blockTime>3000</blockTime> 
+											  <blockTime>30000</blockTime> 
 											  <targetPercent>50</targetPercent> 
 											  <initVal>60</initVal> 
 											  <tutorial>0</tutorial> 
 											</stimConfig>
 											<stimConfig stimConfig_id="2">
 											  <stroopEffect>1</stroopEffect> 
-											  <blockTime>6000</blockTime> 
+											  <blockTime>60000</blockTime> 
 											  <targetPercent>40</targetPercent> 
 											  <initVal>60</initVal> 
 											  <tutorial>0</tutorial> 
@@ -93,11 +106,16 @@
 					var ldr:Loader = new Loader();
 					ldr.contentLoaderInfo.addEventListener(Event.COMPLETE, LoaderCompleteHandler);
 					ldr.load(new URLRequest('60sec.swf'));
+					trace(res3.width)
+					trace(res3.height)
+					trace('sdofihlkhlkhlkdhflskhdflkshdlfkhslkhlkhlkhlkhlkhlkh')
 				}
 		
 				public function LoaderCompleteHandler(e:Event):void
 				{
-					_ex = e.target.content;
+					_ex = e.target.content as MovieClip;
+					_ex.height=this.height;
+					_ex.width=this.width;
 					exwindow.rawChildren.addChild(_ex);	
 					_ex.addEventListener("InitMovieDone", InitMovieDone);
 					_ex.addEventListener("BlockFinished", BlockFinished);
@@ -133,63 +151,69 @@
 				}
 		
 				public function GameFinished(e:Event):void{
-					trace('--------------------------------------game finish called!')
-					trace(_ex['gLevel'])
-					trace(_ex['gTrialCount'])
-					trace(_ex['gTrialCorrect'])
-					trace(_ex['gThreshold'])
 					speedLev = _ex['gLevel']
 					numCorr = _ex['gTrialCorrect'];
-					numTot = _ex{'gTrialCound'];
-					ready();
-//					ready({level:_ex['gLevel'],
-//							 trials:_ex['gTrialCount'],
-//							 corrtrials:_ex['gTrialCorrect'], 
-//							 thresh:_ex['gThreshold']});
+					numTot = _ex['gTrialCount'];
+					ready({level:_ex['gLevel'],
+							 trials:_ex['gTrialCount'],
+							 corrtrials:_ex['gTrialCorrect'], 
+							 thresh:_ex['gThreshold'],
+							 res_txt : "Top performer!<br/><br/>You made it to speed level "+speedLev.toString()+" (out of 5)"});
 				}
 				
-				public function ReviewBlockFinished(e:Event):void
-				{
-					trace('--------------------------------------review finish called!')
-				}
+//				public function ReviewBlockFinished(e:Event):void
+//				{
+//					trace('--------------------------------------review finish called!')
+//				}
 				
 				public function Graduate():void					
 				{
 					trace('-----------------------------------------graduate called');	
 					_ex['InitMap']({});		
 				}
+				
+				public function startover():void{
+					HTTPUtil.refresh();
+				}
 		]]>
 	</mx:Script>
 	
 	<mx:ViewStack id = "gamebox" creationPolicy="all" width="100%" height = "100%">
 	
-		<cust:splash id="splash" backgroundImage="@Embed('assets/sixtysec/count_splash1.png')" backgroundColor="0xddffee" paddingLeft="50">
-			<mx:Spacer height="50"/>
+		<cust:splash id="splash" backgroundImage="@Embed('assets/sixtysec/60SecSplash.jpg')" backgroundColor="0xddffee" >
+			<mx:Spacer height="80%"/>
 			<cust:positbutton click = "ready()" label = "Play now"/>
+			<mx:TextArea editable="false" selectable="false" width="75%" height="15%"  htmlText="{_disclaimerdrivel}"
+				paddingLeft="0" paddingBottom="0" paddingRight="0" verticalScrollPolicy="off" fontSize="{littlestfont*0.7}"
+				 backgroundAlpha="0.0" backgroundColor="0xFFFFFF" borderThickness="0"/>
 		</cust:splash>
 		
 		<mx:VBox id="exwindow" width="100%" height="100%" backgroundColor="0x00FF00" >
 		</mx:VBox>
 		
-		<mx:HBox id="results" width="100%" height="100%">
-			<mx:VBox width = "100%" height = "100%">
-				<mx:Label text="Detailed Results" fontSize="24"/>
-				<mx:Box width = "100%" height = "100%" backgroundImage="@Embed('assets/sixtysec/BarGraph.jpg')"/>
-				<mx:Text text = "Most get to speed level 3 (out of 5)"/>
-				<mx:Text text = "Your score: speed level {speedLev} (out of 5)"/>
-				<mx:Canvas width = "100%" height = "100%" backgroundImage="@Embed('assets/sixtysec/PieChart.jpg')"/>
-				<mx:Text text = "Most get 55 out of 71 correct"/>
-				<mx:Text text = "Your score: {numCorr} out of {numTot} correct"/>
-			</mx:VBox>
+		<mx:VBox id = "results"  width="100%" height="100%" horizontalAlign="center"
+			 paddingLeft="30" paddingRight="30" paddingTop="30">
 			
-			<mx:VBox width = "100%" height = "100%">
-				<mx:TextArea width = "100%" height = "100%" htmlText= "{expTxt}"/>
-				<mx:HBox width = "100%" height = "100%">
-					<cust:positbutton label="Play Again!"/>
-					<cust:positbutton label="Fill out our Survey?"/>						
-				</mx:HBox>
-			</mx:VBox>
-		</mx:HBox>
+			<mx:Label text="Detailed Results" fontSize="24" height="30" width="100%"/>
+			
+			<mx:HBox width="100%" height="100%">		 
+		
+				<mx:VBox width = "100%" height = "100%" verticalAlign="top">
+					<mx:Box id = "res3" width = "220" height = "170" backgroundImage="@Embed('assets/sixtysec/BarGraph.jpg')"
+						  backgroundSize="100%"/>
+					<mx:Label text="Most get to speed level 3 (out of 5)"/>
+					<mx:Label text = "Your score: speed level {speedLev} (out of 5)"/>
+				
+				</mx:VBox>
+				
+				<mx:VBox width = "100%" height = "100%" verticalAlign="top">
+					<mx:TextArea selectable="false" editable="false" htmlText="{expTxt}" fontSize="{littlestfont*0.85}"
+						width="100%" height = "100%" borderThickness="0" borderStyle="solid" cornerRadius="10" backgroundColor="0xddeeFF"/>
+					<cust:positbutton label="Play Again!" click = "startover()" color="0x000055"/>
+				</mx:VBox>
+			
+			</mx:HBox>
+		</mx:VBox>
 		
 		
 	</mx:ViewStack>

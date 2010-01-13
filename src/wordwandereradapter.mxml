@@ -7,14 +7,14 @@
 	
 	<mx:Script>
 		<![CDATA[
-		
+				
 				import flash.display.*;
 				import flash.display.Loader;
 				import flash.events.Event;
 				import flash.net.URLRequest;
 				import flash.net.URLLoader;			
 				import flash.text.*;
-		
+				
 				import utils.HTTPUtil;
 			//*********************interface that the container will require:
 			
@@ -22,10 +22,11 @@
 			
 			private function init():void{
 				this.systemManager.loaderInfo.sharedEvents.addEventListener('containerevent', gotevent);
+				littlestfont = Math.ceil(this.width/50);
 				gameinit();
 			}
 			
-			private function gotevent(e:*):void{		
+			private function gotevent(e:*):void{	
 				trace('got event: ' + e.result.command);
 				this[e.result.command]();
 			}
@@ -50,37 +51,82 @@
 				this.systemManager.loaderInfo.sharedEvents.dispatchEvent(
 					new ResultEvent('gameevent', false, true, {gamedata:dat}));
 			}
+			
+			[Bindable]
+			public var littlestfont:int;
 		
 		/////////////////////////////////////////////////////////////////////////
 			
 				private var _ex:MovieClip;	
 				
-				private var threshexp:String = 'Did you know we were keeping track of how many letters were in your tray? You may have noticed that when you used all of your letters before the timer ran out, you were given an additional letter tiles to use in the next turn.  Conversly, if you ran out of time before using your letters, a letter tile was removed in the next turn.  This adaptive component is critical to brain fitness and not routinely found in online word games.';
+				private var threshexp:String = 'Did you know we were keeping '+
+											'track of how many letters were '+										
+											'in your tray? You may have noticed '+											
+											'that when you used all of your '+											
+											'letters before the timer ran out, '+ 											
+											'you were given an additional letter '+											
+											'tiles to use in the next turn. '+  											
+											'Conversly, if you ran out of time '+ 											
+											'before using your letters, a letter '+											
+											'tile was removed in the next turn. '+  											
+											'This adaptive component is critical '+ 											
+											'to brain fitness and not routinely '+ 											
+											'found in online word games. '+											
+											'Most players average about 4 '+											
+											'letters in their tray.'
+				private var _ims:Array;
 				
 				[Bindable]
 				private var thresh:int = 0;
 				[Bindable]
 				private var score:int = 0;
 				
+				private const _disclaimerdrivel:String = "Copyright 2009 Posit Science. All Rights Reserved."+
+            	"Posit Science does not provide medical advice, diagnosis or treatment. Individual results from using our programs will vary.  "+
+            	'Your use of the site indicates your agreement to be bound by the '+
+            	'<font color = "#aa0000"><a href="http://www.positscience.com/terms.php">Terms and Conditions</a></font>;'+
+            	' please review them before using the site. Our '+
+            	'<font color = "#aa0000"><a href="http://www.positscience.com/privacy.php">Privacy Policy </a></font>changed on 7/13/09. '+
+            	'We recommend you review the updated policy.'
+            	
+            	private const _blurb:String = "Word Wanderer offers a fun and novel twist on the classic word game. " + 
+            			"In Word Wanderer, a user guides an animated character named Jack through the forest by building words from the tile tray on the magical board."+
+            			"The goal of the game is to earn points by placing a total of 50 letters on the board in the shortest amount of time."+
+            			"The game adapts the level of play based on a user's previous turn; the better a player does the more letter tiles they must use and thus the game becomes more difficult."
+				
 				public function gameinit()
 				{
 					var ldr:Loader = new Loader();
 					ldr.contentLoaderInfo.addEventListener(Event.COMPLETE, LoaderCompleteHandler);
 					ldr.load(new URLRequest('scrabble.swf'));
+					_ims = [res3, res4, res5, res6, res7];
+					littlestfont = Math.ceil(this.width/50);
 				}
 				
 				public function LoaderCompleteHandler(e:Event):void
 				{
 					_ex = e.target.content;
+					trace('size:')
+					trace(_ex.height)
+					trace(_ex.width)
+					trace(getBounds(_ex).toString())
+//					_ex.
+					//manually scale..
+					//intended square is 902 x 600
 					exwindow.rawChildren.addChild(_ex);
+					_ex.height=this.height*_ex.height/600;
+					_ex.width=this.width*_ex.width/902;
 					_ex.addEventListener('donewithgame', gamedone);
 				}
 				
 				public function gamedone(e:Event):void{
-					trace('game done:')
 					score = _ex['resscore']
 					thresh = _ex['resthresh'];
-					ready();
+					thresh = Math.min(Math.max(thresh, 3), 7);
+					detresims.selectedChild = _ims[thresh-3];
+					ready({score:score, thresh:thresh, res_txt:
+						'Nice work!'+
+						'<br/><br/>Your score: '+score.toString()});
 				}
 				
 				public function startover():void{
@@ -91,31 +137,54 @@
 	
 	<mx:ViewStack id = "gamebox" creationPolicy="all" width="100%" height = "100%">
 	
-		<cust:splash id="splash" backgroundImage="@Embed('assets/wanderer/jack_splash4.jpg')" backgroundColor="0xddffee" paddingLeft="50">
-			<mx:Spacer height="50"/>
-			<cust:positbutton click = "ready()" label = "Play now"/>
+		<cust:splash id="splash" backgroundImage="@Embed('assets/wanderer/jack_splash4.jpg')" backgroundColor="0xddffee"
+			 verticalAlign="bottom" width="100%" height="100%" backgroundSize="100%">
+			 
+			 	<mx:Spacer height="30%"/>
+			 	
+			<mx:HBox width="100%" height="75%" horizontalAlign="right" backgroundAlpha="0">
+				<mx:TextArea editable="false" selectable="false" width="40%" height="100%"  htmlText="{_blurb}"
+				paddingLeft="0" paddingBottom="0" paddingRight="0" verticalScrollPolicy="off" fontSize="{littlestfont}"
+					 backgroundAlpha="0.75" backgroundColor="0xFFFFFF" color="0x005500"/>
+			</mx:HBox>
+			 
+			 	<mx:Spacer height="10%"/>
+			
+			<mx:HBox width="100%" height="20%" backgroundAlpha="0" borderThickness="0">			
+				<mx:TextArea editable="false" selectable="false" width="75%" height="100%"  htmlText="{_disclaimerdrivel}"
+					paddingLeft="0" paddingBottom="0" paddingRight="0" verticalScrollPolicy="off" fontSize="{littlestfont*0.7}"
+					 backgroundAlpha="0.0" backgroundColor="0xFFFFFF" borderThickness="0"/>				
+				<cust:positbutton click = "ready()" label = "Play now"/>
+			</mx:HBox>
 		</cust:splash>
 		
 		<mx:VBox id="exwindow" width="100%" height="100%" backgroundColor="0x00FF00"/>
 		
-		<mx:HBox id="results" width="100%" height="100%">
-			<mx:VBox width = "100%" height = "100%">
-			<mx:Label text="Detailed Results" fontSize="24"/>
-				<mx:Box width = "100%" height = "100%" backgroundImage="@Embed('assets/sixtysec/BarGraph.jpg')"/>
-				<mx:Label text="Your score: {score}"/>
-				<mx:Label text = "Average number of letters in the tray: {thresh}"/>
-				<mx:TextArea selectable="false" editable="false" text="{threshexp}"
-					width="100%" height = "200"/>
-			</mx:VBox>
-			
-			<mx:VBox width = "100%" height = "100%" label="Interested in your brain health?">
-				<mx:TextArea width = "100%" height = "100%" htmlText= "Want more fun brain games as well as access to scientifically validated research on how to improve your brain health?"/>
-				<mx:HBox width = "100%" height = "100%">
+		<mx:VBox id = "results"  width="100%" height="100%" horizontalAlign="center"
+			 paddingLeft="10" paddingRight="10" paddingTop="10">			
+			<mx:Label text="Detailed Results" fontSize="24" height="10%" width="100%"/>						
+			<mx:HBox width="100%" height="100%">		
+				<mx:VBox width = "100%" height = "75%" verticalAlign="top">
+					<mx:ViewStack id = "detresims" width="100%" height="100%">
+						<mx:Box id = "res3" width = "100%" height = "100%" backgroundImage="@Embed('assets/wanderer/jack_resultspg_3.jpg')" backgroundSize="100%"/>
+						<mx:Box id = "res4" width = "100%" height = "100%" backgroundImage="@Embed('assets/wanderer/jack_resultspg_4.jpg')" backgroundSize="100%"/>
+						<mx:Box id = "res5" width = "100%" height = "100%" backgroundImage="@Embed('assets/wanderer/jack_resultspg_5.jpg')" backgroundSize="100%"/>
+						<mx:Box id = "res6" width = "100%" height = "100%" backgroundImage="@Embed('assets/wanderer/jack_resultspg_6.jpg')" backgroundSize="100%"/>
+						<mx:Box id = "res7" width = "100%" height = "100%" backgroundImage="@Embed('assets/wanderer/jack_resultspg_7.jpg')" backgroundSize="100%"/>	
+					</mx:ViewStack>					
+					<mx:Label text="Your score: {score}" width="100%" height="10%"/>
+					<mx:Label text = "Average number of letters in your tray: {thresh}" width="100%" height="10%"/>
+				
+				</mx:VBox>
+				<mx:VBox width = "100%" height = "100%" verticalAlign="top">
+					<mx:TextArea selectable="false" editable="false" text="{threshexp}" fontSize="{littlestfont}"
+						 paddingLeft="0" paddingBottom="0" paddingRight="0" verticalScrollPolicy="off"
+						width="100%" height = "75%" borderThickness="0" borderStyle="solid" cornerRadius="10" backgroundColor="0xbbFFbb"/>
 					<cust:positbutton label="Play Again!" click = "startover()"/>
-					<cust:positbutton label="Fill out our Survey?"/>				
-				</mx:HBox>
-			</mx:VBox>
-		</mx:HBox>
+				</mx:VBox>
+			
+			</mx:HBox>
+		</mx:VBox>
 				
 	</mx:ViewStack>
 	

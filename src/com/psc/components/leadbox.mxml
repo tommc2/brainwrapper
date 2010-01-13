@@ -5,32 +5,42 @@
 		<![CDATA[
 			import mx.rpc.events.ResultEvent;
 			import mx.events.ValidationResultEvent;
-			import utils.CookieUtil;
+			import utils.*;
 			import flash.system.Security;
 			
 			[Bindable]
 			public var gametitle:String = "psc";
 			[Bindable]
+			public var titletxt:String = "Play brain games and get free information on brain health!";
+			[Bindable]
 			private var formValid:Boolean = false;
+			[Bindable]
+			public var littlestfont:int = 14;
+			
+			[Bindable]
+			public var leadstr:String = 'Cornucopia (inbound)';
+			[Bindable]
+			public var subleadstr:String = 'brain games';
 			
 			private var _submitted:Boolean = false;
 			
-			private const summarytxt:String = 'Fill in your information below to play our free brain games as many times as you like!<br/><br/>'+
+			[Bindable]
+			public var summarytxt:String = 'Fill in your information below to play our free brain games as many times as you like! '+
 				'We will also send you our Brain Fitness e-newsletter with access to more fun games and scientifically validated information on how to improve your brain health.<br/><br/>'+
 				'We never sell or rent your information, as per our privacy policy.'
-				
+			
 			private function submit():void{
 				if(!_submitted){
 					_submitted = true;
-//					leadSvc.send();
-//					w2pSvc.send({
-//							first_name:'tttttravis',
-//							last_name:'wwwwwade',
-//							email:'travisete48e777st@ps9c.com',
-//							lead_source:'test',
-//							sub_lead_source:'subtest',
-//							birth_year:'1985'});
-//					CookieUtil.setCookie('cornucopia', {source:'nback'}, 900);
+					leadSvc.send();
+					w2pSvc.send({
+							first_name:fnamein.text,
+							last_name:lnamein.text,
+							email:emailin.text,
+							lead_source:leadstr,
+							sub_lead_source:HTTPUtil.getHostName()+' - '+subleadstr,
+							campaign:HTTPUtil.getHostName()+' - '+subleadstr,
+							birth_year:yobin.text});
 					dispatchEvent(new Event('registered'));
 				}
 			}
@@ -42,15 +52,10 @@
 			}
 			
 			private function handleReturn(e:ResultEvent):void{
-				trace('rweseult2!')
-				trace(e.result.toString())
+				trace('heard back from the lead service');
+				CookieUtil.setCookie('psc', {leadinfo:e.result.toString()}, 365);
 			}
-			
-			private function handleFault(e:Event):void{
-				trace('idiot.')
-				trace(e.toString());
-			}
-			
+						
 		]]>
 	</mx:Script>
 	
@@ -58,7 +63,6 @@
 		id = "leadSvc"
 		url = "http://datacopia.heroku.com/userinfos.xml"
 		resultFormat = "e4x" method = "POST"
-		fault = "handleFault(event)"
 		contentType = "application/xml">
 		<mx:request xmlns="">
 			<userinfo>
@@ -80,30 +84,30 @@
 		url = "http://www.positscience.com/includes/web2person/web2person.php"
 		resultFormat = "text" 
 		result = "handleReturn(event)"
-		method = "POST"
-		fault = "handleFault(event)">
+		method = "POST">
 	</mx:HTTPService>
 	
 	<mx:Metadata>
 		[Event(name = "registered", type = "flash.events.Event")]
 	</mx:Metadata>
 	
-	<mx:Text width = "100%" height = "30" 
-		text = "Play {gametitle} and get free information on brain health!" 
-		color="0x003e72" fontSize="24" fontFamily="_avenirheavy"/>
-	<mx:TextArea width = "100%" height = "120" htmlText="{summarytxt}" selectable="false" editable="false" backgroundAlpha="0"/>
+	<mx:Text width = "100%" height = "10%" 
+		text = "{titletxt}" 
+		color="0x003e72" fontSize="{littlestfont*1.5}" fontFamily="_avenirheavy"/>
+	<mx:TextArea width = "100%" height = "15%" htmlText="{summarytxt}" selectable="false" editable="false" backgroundAlpha="0" fontSize="{littlestfont*0.9}"
+			 verticalScrollPolicy="off"/>
 	<mx:Text text = "First name:"/>
-	<mx:TextInput id = "fnamein" width = "50%" change="validateform()"/>
+	<mx:TextInput id = "fnamein" width = "50%" change="validateform()" fontSize="{littlestfont}"/>
 	<mx:Text text = "Last name:"/>
-	<mx:TextInput id = "lnamein" width = "50%" change="validateform()"/>
+	<mx:TextInput id = "lnamein" width = "50%" change="validateform()" fontSize="{littlestfont}"/>
 	<mx:Text text = "*Year of birth:"/>
-	<mx:TextInput id = "yobin" width = "20%" backgroundColor="0xffed9b" change="validateform()"/>
+	<mx:TextInput id = "yobin" width = "20%" backgroundColor="0xffed9b" change="validateform()" fontSize="{littlestfont}"/>
 	<mx:Text text = "*Email:"/>
-	<mx:TextInput id = "emailin" backgroundColor="0xffed9b" width = "50%" change="validateform()"/>
+	<mx:TextInput id = "emailin" backgroundColor="0xffed9b" width = "50%" change="validateform()" fontSize="{littlestfont}"/>
 	
 	<mx:EmailValidator id="emailValidator" source="{emailin}" property="text"/>	
     <mx:NumberValidator id = "yobValidator" source = "{yobin}" property="text" minValue="1850" maxValue="2009"/>
 	
-	<mx:Button label="Submit" fontWeight="normal" alpha = "1" fillColors="[0xffdc8a, 0xfebe27]" fillAlphas="[1, 1]" fontSize="16"
-		 click="submit()" enabled="true"/><!--"{formValid}"/>-->
+	<mx:Button label="Submit" fontWeight="normal" alpha = "1" fillColors="[0xffdc8a, 0xfebe27]" fillAlphas="[1, 1]" fontSize="{littlestfont*1.5}"
+		 click="submit()" enabled="{formValid}"/>
 </mx:VBox>
